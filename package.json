@@ -1,0 +1,39 @@
+{
+  "name": "compliance-audit-evidence-vault-team7",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Compliance / Audit Evidence Vault (Team 7) - Electron + React + TypeScript desktop app",
+  "main": "electron-dist/main.cjs",
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\" \"npm:dev:start\"",
+    "dev:renderer": "vite --config renderer/vite.config.ts",
+    "dev:electron": "tsup electron/main.ts electron/preload.ts --out-dir electron-dist --format cjs --sourcemap --watch",
+    "dev:start": "wait-on http://localhost:5173 && electron electron-dist/main.cjs",
+    "build": "npm run build:renderer && npm run build:electron",
+    "build:renderer": "vite build --config renderer/vite.config.ts",
+    "build:electron": "tsup electron/main.ts electron/preload.ts --out-dir electron-dist --format cjs --sourcemap",
+    "start": "electron electron-dist/main.cjs",
+    "lint": "echo \"No linter configured\""
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "better-sqlite3": "^11.5.0",
+    "electron": "^33.2.0",
+    "pdfkit": "^0.15.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/react-router-dom": "^5.3.3",
+    "@vitejs/plugin-react-swc": "^3.7.1",
+    "concurrently": "^9.1.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.1",
+    "wait-on": "^8.0.1"
+  }
+}
