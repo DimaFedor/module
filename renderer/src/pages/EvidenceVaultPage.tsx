@@ -13,6 +13,7 @@ import { Badge } from '../components/ui/Badge';
 import { CheckboxRow } from '../components/ui/CheckboxRow';
 import { listEvidence, deleteEvidence, undoDeleteEvidence } from '../services/evidenceService';
 import type { EvidenceRow, EvidenceStatus } from '../types/ipc';
+import { t } from '../i18n/t';
 
 type LoadState = 'idle' | 'loading' | 'error' | 'success';
 
@@ -56,7 +57,7 @@ export const EvidenceVaultPage: React.FC = () => {
       setTotal(res.total);
       setLoadState('success');
     } catch (e: any) {
-      setError(e?.message || 'Failed to load evidence.');
+      setError(e?.message || t('vault.error.load'));
       setLoadState('error');
     }
   }, [search, status, category, sortBy, sortDir, page, pageSize, includeHistory]);
@@ -101,16 +102,14 @@ export const EvidenceVaultPage: React.FC = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h1 style={{ marginTop: 0, marginBottom: 4 }}>Evidence Vault</h1>
-          <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
-            Search and filter evidence; latest versions are shown by default for clarity.
-          </p>
+          <h1 style={{ marginTop: 0, marginBottom: 4 }}>{t('vault.title')}</h1>
+          <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{t('vault.subtitle')}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <CheckboxRow
             checked={autoRefresh}
             onChange={(e) => setAutoRefresh(e.currentTarget.checked)}
-            label="Auto-refresh"
+            label={t('vault.autoRefresh')}
           />
           {autoRefresh && (
             <Select
@@ -122,7 +121,7 @@ export const EvidenceVaultPage: React.FC = () => {
               <option value="60">60s</option>
             </Select>
           )}
-          <Button onClick={() => navigate('/evidence/new')}>New evidence</Button>
+          <Button onClick={() => navigate('/evidence/new')}>{t('vault.newEvidence')}</Button>
         </div>
       </div>
 
@@ -136,7 +135,7 @@ export const EvidenceVaultPage: React.FC = () => {
       >
         <Input
           id="evidence-search-input"
-          placeholder="Search title, description, or tags"
+          placeholder={t('vault.searchPlaceholder')}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -150,10 +149,10 @@ export const EvidenceVaultPage: React.FC = () => {
             setPage(1);
           }}
         >
-          <option value="all">All statuses</option>
-          <option value="draft">Draft</option>
-          <option value="submitted">Submitted</option>
-          <option value="approved">Approved</option>
+          <option value="all">{t('vault.filter.status.all')}</option>
+          <option value="draft">{t('vault.filter.status.draft')}</option>
+          <option value="submitted">{t('vault.filter.status.submitted')}</option>
+          <option value="approved">{t('vault.filter.status.approved')}</option>
         </Select>
         <Select
           value={category}
@@ -162,10 +161,10 @@ export const EvidenceVaultPage: React.FC = () => {
             setPage(1);
           }}
         >
-          <option value="all">All categories</option>
-          <option value="control">Control</option>
-          <option value="policy">Policy</option>
-          <option value="evidence">Evidence</option>
+          <option value="all">{t('vault.filter.category.all')}</option>
+          <option value="control">{t('vault.filter.category.control')}</option>
+          <option value="policy">{t('vault.filter.category.policy')}</option>
+          <option value="evidence">{t('vault.filter.category.evidence')}</option>
         </Select>
         <Select
           value={`${sortBy}:${sortDir}`}
@@ -175,10 +174,10 @@ export const EvidenceVaultPage: React.FC = () => {
             setSortDir(sd);
           }}
         >
-          <option value="created_at:desc">Newest first</option>
-          <option value="created_at:asc">Oldest first</option>
-          <option value="status:asc">Status A-Z</option>
-          <option value="status:desc">Status Z-A</option>
+          <option value="created_at:desc">{t('vault.sort.newest')}</option>
+          <option value="created_at:asc">{t('vault.sort.oldest')}</option>
+          <option value="status:asc">{t('vault.sort.statusAsc')}</option>
+          <option value="status:desc">{t('vault.sort.statusDesc')}</option>
         </Select>
       </div>
 
@@ -186,7 +185,7 @@ export const EvidenceVaultPage: React.FC = () => {
         <CheckboxRow
           checked={includeHistory}
           onChange={(e) => setIncludeHistory(e.currentTarget.checked)}
-          label="Show history (all versions)"
+          label={t('vault.showHistory')}
         />
       </div>
 
@@ -200,9 +199,9 @@ export const EvidenceVaultPage: React.FC = () => {
         <div style={{ marginBottom: 12 }}>
           <Callout type="error">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{error}</span>
+              <span>{error ?? t('vault.error.load')}</span>
               <Button variant="ghost" onClick={load}>
-                Retry
+                {t('vault.retry')}
               </Button>
             </div>
           </Callout>
@@ -214,12 +213,12 @@ export const EvidenceVaultPage: React.FC = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Version</th>
-                <th>Created</th>
-                <th />
+                <th>{t('vault.table.title')}</th>
+                <th>{t('vault.table.category')}</th>
+                <th>{t('vault.table.status')}</th>
+                <th>{t('vault.table.version')}</th>
+                <th>{t('vault.table.created')}</th>
+                <th>{t('vault.table.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -237,13 +236,13 @@ export const EvidenceVaultPage: React.FC = () => {
                       variant="ghost"
                       onClick={() => navigate(`/evidence/${item.id}`)}
                     >
-                      Edit
+                      {t('vault.action.edit')}
                     </Button>
                     <Button
                       variant="ghost"
                       onClick={() => setConfirmDeleteId(item.id)}
                     >
-                      Delete
+                      {t('vault.action.delete')}
                     </Button>
                   </td>
                 </tr>
@@ -261,19 +260,19 @@ export const EvidenceVaultPage: React.FC = () => {
 
       {loadState === 'success' && !hasData && (
         <EmptyState
-          title="No evidence yet"
-          description="Start by adding your first evidence item so auditors have something to review."
-          actionLabel="Add evidence"
+          title={t('vault.empty.title')}
+          description={t('vault.empty.description')}
+          actionLabel={t('vault.empty.cta')}
           onAction={() => navigate('/evidence/new')}
         />
       )}
 
       {confirmDeleteId && (
         <Modal
-          title="Delete evidence?"
-          description="This will remove the selected version. History rows remain unless deleted explicitly."
-          confirmLabel="Delete"
-          cancelLabel="Cancel"
+          title={t('vault.delete.title')}
+          description={t('vault.delete.description')}
+          confirmLabel={t('vault.delete.confirm')}
+          cancelLabel={t('vault.delete.cancel')}
           onConfirm={handleDelete}
           onCancel={() => setConfirmDeleteId(null)}
         />
@@ -281,8 +280,8 @@ export const EvidenceVaultPage: React.FC = () => {
 
       {showUndo && (
         <Snackbar
-          message="Evidence deleted. You can undo for 5 seconds."
-          actionLabel="Undo"
+          message={t('vault.snackbar.deleted')}
+          actionLabel={t('vault.snackbar.undo')}
           onAction={handleUndo}
         />
       )}

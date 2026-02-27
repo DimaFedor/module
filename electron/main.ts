@@ -6,6 +6,7 @@ import BetterSqlite3 from 'better-sqlite3';
 import type { Database } from 'better-sqlite3';
 import PDFDocument from 'pdfkit';
 import archiver from 'archiver';
+import { resolveFontPath } from './utils/paths';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -82,8 +83,7 @@ function getPaths() {
   const userData = app.getPath('userData');
   const dbPath = path.join(userData, 'vault.db');
   const evidenceDir = path.join(userData, 'evidence-files');
-  const fontPath = path.join(__dirname, '..', 'assets', 'fonts', 'NotoSans-Regular.ttf');
-  return { userData, dbPath, evidenceDir, fontPath };
+  return { userData, dbPath, evidenceDir };
 }
 
 function ensureDatabase() {
@@ -123,8 +123,9 @@ function createWindow() {
 }
 
 function registerIpcHandlers() {
-  const { evidenceDir, fontPath } = getPaths();
+  const { evidenceDir } = getPaths();
   fs.mkdirSync(evidenceDir, { recursive: true });
+  const fontPath = resolveFontPath();
 
   ipcMain.handle('theme:get-system', () => {
     return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
@@ -359,9 +360,9 @@ function registerIpcHandlers() {
     );
     const items = evidenceStmt.all(...params) as EvidenceRow[];
 
-    const pdfBuffer = await createReportPdf(items, fontPath);
+    const pdfPath = await createReportPdf(items, fontPath, path.dirname(result.filePath));
 
-    await createZipWithPdfAndFiles(result.filePath, pdfBuffer, items);
+    await createZipWithPdfAndFiles(result.filePath, pdfPath, items);
 
     if (items.length > 0) {
       logAudit('EXPORT_PACKAGE', items[0].id, 'evidence');
@@ -417,26 +418,34 @@ function logAudit(action: string, entityId: string, entityType: string) {
   });
 }
 
-function createReportPdf(items: EvidenceRow[], fontPath: string): Promise<Buffer> {
+function createReportPdf(
+  items: EvidenceRow[],
+  fontPath: string,
+  outputDir: string
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50 });
-    const chunks: Buffer[] = [];
+    const pdfPath = path.join(outputDir, `report-ukrainian-${Date.now()}.pdf`);
+    const stream = fs.createWriteStream(pdfPath);
+
+    stream.on('close', () => resolve(pdfPath));
+    stream.on('error', (err) => reject(err));
+    doc.on('error', (err) => reject(err));
+
+    doc.pipe(stream);
 
     try {
-      if (fs.existsSync(fontPath)) {
-        doc.registerFont('noto', fontPath);
-        doc.font('noto');
-      }
-    } catch {
-      // If font registration fails, PDFKit will fall back; in production a valid font should exist.
+      doc.registerFont('NotoSans', fontPath);
+      doc.font('NotoSans');
+    } catch (err) {
+      reject(
+        new Error(
+          `Failed to register Ukrainian font at ${fontPath}: ${(err as Error).message}`
+        )
+      );
+      doc.end();
+      return;
     }
-
-    doc.on('data', (chunk) => chunks.push(chunk as Buffer));
-    doc.on('end', () => {
-      const buffer = Buffer.concat(chunks);
-      resolve(buffer);
-    });
-    doc.on('error', (err) => reject(err));
 
     doc.fontSize(18).text('Звіт аудиторського пакету', { align: 'center' });
     doc.moveDown();
@@ -449,7 +458,7 @@ function createReportPdf(items: EvidenceRow[], fontPath: string): Promise<Buffer
       minute: '2-digit',
     }).format(new Date());
 
-    doc.fontSize(12).text(`Дата формування: ${formattedDate}`, { align: 'left' });
+    doc.fontSize(12).text(`Дата: ${formattedDate}`, { align: 'left' });
     doc.moveDown();
 
     doc.fontSize(12).text('Список доказів:', { underline: true });
@@ -465,11 +474,11 @@ function createReportPdf(items: EvidenceRow[], fontPath: string): Promise<Buffer
       );
       const tags = tagsStmt.all(item.id).map((t: any) => t.name) as string[];
       const line = [
-        item.title,
-        item.category,
-        item.status,
-        String(item.version_number),
-        tags.join(', '),
+        `Назва: ${item.title}`,
+        `Категорія: ${item.category}`,
+        `Статус: ${item.status}`,
+        `Версія: ${item.version_number}`,
+        `Теги: ${tags.join(', ')}`,
       ].join(' | ');
       doc.text(line);
     }
@@ -478,11 +487,7 @@ function createReportPdf(items: EvidenceRow[], fontPath: string): Promise<Buffer
   });
 }
 
-function createZipWithPdfAndFiles(
-  zipPath: string,
-  pdfBuffer: Buffer,
-  items: EvidenceRow[]
-): Promise<void> {
+function createZipWithPdfAndFiles(zipPath: string, pdfPath: string, items: EvidenceRow[]): Promise<void> {
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(zipPath);
     const archive = archiver('zip', { zlib: { level: 9 } });
@@ -492,7 +497,7 @@ function createZipWithPdfAndFiles(
 
     archive.pipe(output);
 
-    archive.append(pdfBuffer, { name: 'report.pdf' });
+    archive.file(pdfPath, { name: 'report-ukrainian.pdf' });
 
     for (const item of items) {
       if (fs.existsSync(item.file_path)) {

@@ -1,22 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { t } from '../i18n/t';
 
 export const DashboardPage: React.FC = () => {
   return (
     <div className="card">
-      <h1 style={{ marginTop: 0, marginBottom: 12 }}>Dashboard</h1>
-      <p style={{ marginBottom: 16, fontSize: 14 }}>
-        High-level view of your evidence vault and recent audit activity.
-      </p>
+      <h1 style={{ marginTop: 0, marginBottom: 12 }}>{t('dashboard.title')}</h1>
+      <p style={{ marginBottom: 16, fontSize: 14 }}>{t('dashboard.subtitle')}</p>
       <ul style={{ fontSize: 14, paddingLeft: 18 }}>
         <li>
-          Go to the <Link to="/vault">Evidence Vault</Link> to manage items.
+          {t('dashboard.goVault')} <Link to="/vault">{t('nav.vault')}</Link>.
         </li>
         <li>
-          Review <Link to="/audit-log">Audit Log</Link> for critical changes.
+          {t('dashboard.goAuditLog')} <Link to="/audit-log">{t('nav.auditLog')}</Link>.
         </li>
         <li>
-          Build an <Link to="/export">Export Package</Link> for auditors.
+          {t('dashboard.goExport')} <Link to="/export">{t('nav.export')}</Link>.
         </li>
       </ul>
     </div>

@@ -6,8 +6,14 @@ import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
 import { Spinner } from '../components/ui/Spinner';
 import { Callout } from '../components/ui/Callout';
-import { createEvidence, getEvidence, updateEvidence, openEvidenceFileDialog } from '../services/evidenceService';
+import {
+  createEvidence,
+  getEvidence,
+  updateEvidence,
+  openEvidenceFileDialog,
+} from '../services/evidenceService';
 import type { EvidenceStatus } from '../types/ipc';
+import { t } from '../i18n/t';
 
 type Mode = 'create' | 'edit';
 
@@ -61,7 +67,7 @@ export const EvidenceFormPage: React.FC = () => {
             filePath: existing.file_path,
           });
         } catch (e: any) {
-          setError(e?.message || 'Failed to load evidence.');
+          setError(e?.message || t('form.error.load'));
         } finally {
           setLoadingExisting(false);
         }
@@ -75,9 +81,9 @@ export const EvidenceFormPage: React.FC = () => {
 
   const validate = (): boolean => {
     const next: Errors = {};
-    if (!form.title.trim()) next.title = 'Title is required.';
-    if (!form.category.trim()) next.category = 'Category is required.';
-    if (!form.filePath.trim()) next.filePath = 'Evidence file is required.';
+    if (!form.title.trim()) next.title = t('form.error.title.required');
+    if (!form.category.trim()) next.category = t('form.error.category.required');
+    if (!form.filePath.trim()) next.filePath = t('form.error.file.required');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -121,7 +127,7 @@ export const EvidenceFormPage: React.FC = () => {
       }
       navigate('/vault');
     } catch (e: any) {
-      setError(e?.message || 'Failed to save evidence.');
+      setError(e?.message || t('form.error.save'));
     } finally {
       setLoading(false);
     }
@@ -138,10 +144,10 @@ export const EvidenceFormPage: React.FC = () => {
   return (
     <div className="card">
       <h1 style={{ marginTop: 0, marginBottom: 12 }}>
-        {mode === 'create' ? 'Add evidence' : 'Edit evidence'}
+        {mode === 'create' ? t('form.create.title') : t('form.edit.title')}
       </h1>
       <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 16 }}>
-        Versioning ensures new edits create a new immutable version instead of overwriting history.
+        {t('form.subtitle')}
       </p>
       {error && (
         <div style={{ marginBottom: 12 }}>
@@ -150,53 +156,53 @@ export const EvidenceFormPage: React.FC = () => {
       )}
       <form onSubmit={handleSubmit}>
         <Input
-          label="Title"
+          label={t('form.field.title')}
           required
           value={form.title}
           onChange={(e) => updateField('title', e.target.value)}
           error={errors.title}
         />
         <Select
-          label="Category"
+          label={t('form.field.category')}
           required
           value={form.category}
           onChange={(e) => updateField('category', e.target.value)}
           error={errors.category}
         >
-          <option value="">Choose category</option>
-          <option value="control">Control</option>
-          <option value="policy">Policy</option>
-          <option value="evidence">Evidence</option>
+          <option value="">{t('vault.filter.category.all')}</option>
+          <option value="control">{t('vault.filter.category.control')}</option>
+          <option value="policy">{t('vault.filter.category.policy')}</option>
+          <option value="evidence">{t('vault.filter.category.evidence')}</option>
         </Select>
         <Select
-          label="Status"
+          label={t('form.field.status')}
           value={form.status}
           onChange={(e) => updateField('status', e.target.value as EvidenceStatus)}
         >
-          <option value="draft">Draft</option>
-          <option value="submitted">Submitted</option>
-          <option value="approved">Approved</option>
+          <option value="draft">{t('vault.filter.status.draft')}</option>
+          <option value="submitted">{t('vault.filter.status.submitted')}</option>
+          <option value="approved">{t('vault.filter.status.approved')}</option>
         </Select>
         <Input
-          label="Tags (comma-separated)"
-          placeholder="e.g. iso27001, access-control"
+          label={t('form.field.tags')}
+          placeholder={t('form.field.tags.placeholder')}
           value={form.tags}
           onChange={(e) => updateField('tags', e.target.value)}
         />
         <div className="form-field">
-          <span className="form-label">Evidence file</span>
+          <span className="form-label">{t('form.field.file')}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Button type="button" onClick={handleFileChoose}>
-              Choose file…
+              {t('form.field.file.choose')}
             </Button>
             <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-              {form.filePath ? form.filePath : 'No file selected'}
+              {form.filePath ? form.filePath : t('form.field.file.none')}
             </span>
           </div>
           {errors.filePath && <div className="form-error">{errors.filePath}</div>}
         </div>
         <Textarea
-          label="Description"
+          label={t('form.field.description')}
           value={form.description}
           onChange={(e) => updateField('description', e.target.value)}
         />
@@ -207,10 +213,16 @@ export const EvidenceFormPage: React.FC = () => {
             onClick={() => navigate('/vault')}
             disabled={loading}
           >
-            Cancel
+            {t('form.cancel')}
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? <Spinner /> : mode === 'create' ? 'Create evidence' : 'Save version'}
+            {loading ? (
+              <Spinner />
+            ) : mode === 'create' ? (
+              t('form.submit.create')
+            ) : (
+              t('form.submit.update')
+            )}
           </Button>
         </div>
       </form>

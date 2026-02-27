@@ -5,12 +5,12 @@ import { AuditLogPage } from '../pages/AuditLogPage';
 import { ExportPage } from '../pages/ExportPage';
 
 export const routes = [
-  { path: '/', label: 'Dashboard', component: DashboardPage },
-  { path: '/vault', label: 'Evidence Vault', component: EvidenceVaultPage },
-  { path: '/evidence/new', label: 'Add Evidence', component: EvidenceFormPage },
+  { path: '/', label: 'nav.dashboard', component: DashboardPage },
+  { path: '/vault', label: 'nav.vault', component: EvidenceVaultPage },
+  { path: '/evidence/new', label: 'nav.addEvidence', component: EvidenceFormPage },
   // Hidden route used for edit; not in nav to avoid clutter.
   { path: '/evidence/:id', label: '', component: EvidenceFormPage },
-  { path: '/audit-log', label: 'Audit Log', component: AuditLogPage },
-  { path: '/export', label: 'Export Package', component: ExportPage },
+  { path: '/audit-log', label: 'nav.auditLog', component: AuditLogPage },
+  { path: '/export', label: 'nav.export', component: ExportPage },
 ];
 

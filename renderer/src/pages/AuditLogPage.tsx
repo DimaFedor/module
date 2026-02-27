@@ -5,6 +5,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Button } from '../components/ui/Button';
 import { listAuditLog } from '../services/auditService';
 import type { AuditLogRow } from '../types/ipc';
+import { t } from '../i18n/t';
 
 type LoadState = 'idle' | 'loading' | 'error' | 'success';
 
@@ -21,7 +22,7 @@ export const AuditLogPage: React.FC = () => {
       setItems(data);
       setLoadState('success');
     } catch (e: any) {
-      setError(e?.message || 'Failed to load audit log.');
+      setError(e?.message || t('audit.error.load'));
       setLoadState('error');
     }
   }, []);
@@ -36,13 +37,13 @@ export const AuditLogPage: React.FC = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h1 style={{ marginTop: 0, marginBottom: 4 }}>Audit Log</h1>
+          <h1 style={{ marginTop: 0, marginBottom: 4 }}>{t('audit.title')}</h1>
           <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
-            Critical actions such as deletes, status changes, and exports are tracked here.
+            {t('audit.subtitle')}
           </p>
         </div>
         <Button variant="ghost" onClick={load}>
-          Refresh
+          {t('audit.refresh')}
         </Button>
       </div>
 
@@ -58,7 +59,7 @@ export const AuditLogPage: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>{error}</span>
               <Button variant="ghost" onClick={load}>
-                Retry
+                {t('vault.retry')}
               </Button>
             </div>
           </Callout>
@@ -70,10 +71,10 @@ export const AuditLogPage: React.FC = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>When</th>
-                <th>Action</th>
-                <th>Entity</th>
-                <th>Actor</th>
+                <th>{t('audit.table.when')}</th>
+                <th>{t('audit.table.action')}</th>
+                <th>{t('audit.table.entity')}</th>
+                <th>{t('audit.table.actor')}</th>
               </tr>
             </thead>
             <tbody>
@@ -94,8 +95,8 @@ export const AuditLogPage: React.FC = () => {
 
       {loadState === 'success' && !hasData && (
         <EmptyState
-          title="No audit entries yet"
-          description="Once you start deleting evidence, changing status, or exporting packages, entries will appear here."
+          title={t('audit.empty.title')}
+          description={t('audit.empty.description')}
         />
       )}
     </div>

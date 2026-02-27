@@ -3,6 +3,7 @@ import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { routes } from './routes';
 import { useTheme } from '../theme/ThemeContext';
 import { cn } from '../utils/cn';
+import { t } from '../i18n/t';
 
 // Sidebar is optimized for quick, low-cognitive-load navigation during stressful audits.
 
@@ -33,7 +34,7 @@ export const AppShell: React.FC = () => {
   return (
     <div className="app-root">
       <aside className="sidebar">
-        <div className="sidebar-logo">Evidence Vault</div>
+        <div className="sidebar-logo">{t('app.title')}</div>
         <nav className="sidebar-nav">
           {routes
             .filter((r) => r.label)
@@ -46,21 +47,21 @@ export const AppShell: React.FC = () => {
                   location.pathname === r.path && 'sidebar-link-active'
                 )}
               >
-                {r.label}
+                {r.label ? t(r.label as any) : ''}
               </Link>
             ))}
         </nav>
       </aside>
       <div className="main-area">
         <header className="app-header">
-          <div className="app-header-title">Compliance / Audit Evidence Vault</div>
+          <div className="app-header-title">{t('app.title')}</div>
           <div className="app-header-actions">
             <button
               type="button"
               className="btn btn-ghost"
               onClick={toggleTheme}
             >
-              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              {theme === 'dark' ? t('theme.light') : t('theme.dark')}
             </button>
           </div>
         </header>
