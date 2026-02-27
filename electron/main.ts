@@ -1,14 +1,16 @@
 import { app, BrowserWindow, dialog, ipcMain, nativeTheme } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import Database from 'better-sqlite3';
+import crypto from 'crypto';
+import BetterSqlite3 from 'better-sqlite3';
+import type { Database } from 'better-sqlite3';
 import PDFDocument from 'pdfkit';
 import archiver from 'archiver';
 
 const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow: BrowserWindow | null = null;
-let db: Database.Database;
+let db: Database;
 
 type EvidenceStatus = 'draft' | 'submitted' | 'approved';
 
@@ -87,7 +89,7 @@ function getPaths() {
 function ensureDatabase() {
   const { dbPath } = getPaths();
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-  db = new Database(dbPath);
+  db = new BetterSqlite3(dbPath);
 
   const schemaPath = path.join(__dirname, '..', 'database', 'schema.sql');
   const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
@@ -95,7 +97,7 @@ function ensureDatabase() {
 }
 
 function createWindow() {
-  const preloadPath = path.join(__dirname, 'preload.cjs');
+  const preloadPath = path.join(__dirname, 'preload.js');
 
   mainWindow = new BrowserWindow({
     width: 1280,

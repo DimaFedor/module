@@ -35,18 +35,20 @@ export const AppShell: React.FC = () => {
       <aside className="sidebar">
         <div className="sidebar-logo">Evidence Vault</div>
         <nav className="sidebar-nav">
-          {routes.map((r) => (
-            <Link
-              key={r.path}
-              to={r.path}
-              className={cn(
-                'sidebar-link',
-                location.pathname === r.path && 'sidebar-link-active'
-              )}
-            >
-              {r.label}
-            </Link>
-          ))}
+          {routes
+            .filter((r) => r.label)
+            .map((r) => (
+              <Link
+                key={r.path}
+                to={r.path}
+                className={cn(
+                  'sidebar-link',
+                  location.pathname === r.path && 'sidebar-link-active'
+                )}
+              >
+                {r.label}
+              </Link>
+            ))}
         </nav>
       </aside>
       <div className="main-area">

@@ -3,16 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "description": "Compliance / Audit Evidence Vault (Team 7) - Electron + React + TypeScript desktop app",
-  "main": "electron-dist/main.cjs",
+  "main": "electron-dist/main.js",
   "scripts": {
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\" \"npm:dev:start\"",
     "dev:renderer": "vite --config renderer/vite.config.ts",
     "dev:electron": "tsup electron/main.ts electron/preload.ts --out-dir electron-dist --format cjs --sourcemap --watch",
-    "dev:start": "wait-on http://localhost:5173 && electron electron-dist/main.cjs",
+    "dev:start": "wait-on http://localhost:5173 && electron electron-dist/main.js",
     "build": "npm run build:renderer && npm run build:electron",
     "build:renderer": "vite build --config renderer/vite.config.ts",
     "build:electron": "tsup electron/main.ts electron/preload.ts --out-dir electron-dist --format cjs --sourcemap",
-    "start": "electron electron-dist/main.cjs",
+    "start": "electron electron-dist/main.js",
     "lint": "echo \"No linter configured\""
   },
   "dependencies": {
