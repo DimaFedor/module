@@ -8,7 +8,7 @@ import PDFDocument from 'pdfkit';
 import archiver from 'archiver';
 import { resolveFontPath } from './utils/paths';
 
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = !app.isPackaged;
 
 let mainWindow: BrowserWindow | null = null;
 let db: Database;
