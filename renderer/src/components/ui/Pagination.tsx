@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from './Button';
 import { t } from '../../i18n/t';
+import { IconChevronLeft, IconChevronRight } from '../icons/Icons';
 
 interface PaginationProps {
   page: number;
@@ -19,21 +19,22 @@ export const Pagination: React.FC<PaginationProps> = ({
   return (
     <div className="pagination">
       <span>{t('pagination.pageOf', { page, totalPages })}</span>
-      <Button
-        variant="ghost"
+      <button
+        className="pagination-btn"
         disabled={page <= 1}
         onClick={() => onPageChange(page - 1)}
       >
+        <IconChevronLeft size={14} />
         {t('pagination.prev')}
-      </Button>
-      <Button
-        variant="ghost"
+      </button>
+      <button
+        className="pagination-btn"
         disabled={page >= totalPages}
         onClick={() => onPageChange(page + 1)}
       >
         {t('pagination.next')}
-      </Button>
+        <IconChevronRight size={14} />
+      </button>
     </div>
   );
 };
-

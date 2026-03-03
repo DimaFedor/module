@@ -24,8 +24,8 @@ export const Badge: React.FC<BadgeProps> = ({ status }) => {
         status === 'approved' && 'badge-status-approved'
       )}
     >
+      <span className="badge-dot" />
       {t(labelKey as any)}
     </span>
   );
 };
-

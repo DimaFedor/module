@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from './Button';
+import { IconFolder } from '../icons/Icons';
 
 interface EmptyStateProps {
   title: string;
@@ -16,14 +17,16 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div className="empty-state">
-      <h3 style={{ marginTop: 0 }}>{title}</h3>
-      {description && <p style={{ fontSize: 14 }}>{description}</p>}
+      <div className="empty-state-icon">
+        <IconFolder size={28} />
+      </div>
+      <h3>{title}</h3>
+      {description && <p>{description}</p>}
       {actionLabel && onAction && (
-        <div style={{ marginTop: 16 }}>
+        <div style={{ marginTop: 20 }}>
           <Button onClick={onAction}>{actionLabel}</Button>
         </div>
       )}
     </div>
   );
 };
-

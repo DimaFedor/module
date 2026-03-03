@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from './Button';
+import { IconCheck } from '../icons/Icons';
 
 interface SnackbarProps {
   message: string;
@@ -10,13 +10,13 @@ interface SnackbarProps {
 export const Snackbar: React.FC<SnackbarProps> = ({ message, actionLabel, onAction }) => {
   return (
     <div className="snackbar">
-      <span style={{ fontSize: 13 }}>{message}</span>
+      <IconCheck size={16} color="var(--color-success)" />
+      <span>{message}</span>
       {actionLabel && onAction && (
-        <Button variant="ghost" onClick={onAction}>
+        <button className="snackbar-action" onClick={onAction}>
           {actionLabel}
-        </Button>
+        </button>
       )}
     </div>
   );
 };
-

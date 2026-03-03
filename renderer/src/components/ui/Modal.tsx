@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from './Button';
+import { IconAlertTriangle } from '../icons/Icons';
 
 interface ModalProps {
   title: string;
@@ -19,21 +20,27 @@ export const Modal: React.FC<ModalProps> = ({
   onCancel,
 }) => {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(15,23,42,0.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 40,
-      }}
-    >
-      <div className="card" style={{ maxWidth: 420, width: '100%' }}>
-        <h3 style={{ marginTop: 0 }}>{title}</h3>
-        {description && <p style={{ fontSize: 14 }}>{description}</p>}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+          <div style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: 'var(--color-danger-soft)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <IconAlertTriangle size={20} color="var(--color-danger)" />
+          </div>
+          <div>
+            <h3 className="modal-title">{title}</h3>
+            {description && <p className="modal-description">{description}</p>}
+          </div>
+        </div>
+        <div className="modal-actions">
           <Button variant="ghost" onClick={onCancel}>
             {cancelLabel}
           </Button>
@@ -45,4 +52,3 @@ export const Modal: React.FC<ModalProps> = ({
     </div>
   );
 };
-

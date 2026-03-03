@@ -4,8 +4,7 @@ import { routes } from './routes';
 import { useTheme } from '../theme/ThemeContext';
 import { cn } from '../utils/cn';
 import { t } from '../i18n/t';
-
-// Sidebar is optimized for quick, low-cognitive-load navigation during stressful audits.
+import { navIcons, IconShield, IconSun, IconMoon } from '../components/icons/Icons';
 
 export const AppShell: React.FC = () => {
   const location = useLocation();
@@ -31,14 +30,26 @@ export const AppShell: React.FC = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [navigate]);
 
+  const mainRoutes = routes.filter((r) => r.label && r.label !== 'nav.addEvidence');
+  const actionRoutes = routes.filter((r) => r.label === 'nav.addEvidence');
+
   return (
     <div className="app-root">
       <aside className="sidebar">
-        <div className="sidebar-logo">{t('app.title')}</div>
+        <div className="sidebar-logo">
+          <div className="sidebar-logo-title">
+            <div className="sidebar-logo-icon">
+              <IconShield size={18} color="#fff" />
+            </div>
+            <span>Audit Vault</span>
+          </div>
+          <div className="sidebar-logo-subtitle">Compliance Evidence System</div>
+        </div>
         <nav className="sidebar-nav">
-          {routes
-            .filter((r) => r.label)
-            .map((r) => (
+          <div className="sidebar-section-label">Навігація</div>
+          {mainRoutes.map((r) => {
+            const Icon = navIcons[r.label!];
+            return (
               <Link
                 key={r.path}
                 to={r.path}
@@ -47,10 +58,39 @@ export const AppShell: React.FC = () => {
                   location.pathname === r.path && 'sidebar-link-active'
                 )}
               >
+                {Icon && <Icon size={18} />}
                 {r.label ? t(r.label as any) : ''}
               </Link>
-            ))}
+            );
+          })}
+          <div className="sidebar-section-label">Дії</div>
+          {actionRoutes.map((r) => {
+            const Icon = navIcons[r.label!];
+            return (
+              <Link
+                key={r.path}
+                to={r.path}
+                className={cn(
+                  'sidebar-link',
+                  location.pathname === r.path && 'sidebar-link-active'
+                )}
+              >
+                {Icon && <Icon size={18} />}
+                {r.label ? t(r.label as any) : ''}
+              </Link>
+            );
+          })}
         </nav>
+        <div className="sidebar-footer">
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? t('theme.light') : t('theme.dark')}
+          >
+            {theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
+          </button>
+        </div>
       </aside>
       <div className="main-area">
         <header className="app-header">
@@ -58,10 +98,11 @@ export const AppShell: React.FC = () => {
           <div className="app-header-actions">
             <button
               type="button"
-              className="btn btn-ghost"
+              className="theme-toggle"
               onClick={toggleTheme}
+              title={theme === 'dark' ? t('theme.light') : t('theme.dark')}
             >
-              {theme === 'dark' ? t('theme.light') : t('theme.dark')}
+              {theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
             </button>
           </div>
         </header>
@@ -78,4 +119,3 @@ export const AppShell: React.FC = () => {
     </div>
   );
 };
-

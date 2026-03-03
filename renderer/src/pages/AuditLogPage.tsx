@@ -4,6 +4,7 @@ import { Callout } from '../components/ui/Callout';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Button } from '../components/ui/Button';
 import { listAuditLog } from '../services/auditService';
+import { IconRefresh, IconClipboard } from '../components/icons/Icons';
 import type { AuditLogRow } from '../types/ipc';
 import { t } from '../i18n/t';
 
@@ -35,30 +36,32 @@ export const AuditLogPage: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div>
-          <h1 style={{ marginTop: 0, marginBottom: 4 }}>{t('audit.title')}</h1>
-          <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
-            {t('audit.subtitle')}
-          </p>
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1>{t('audit.title')}</h1>
+          <p>{t('audit.subtitle')}</p>
         </div>
-        <Button variant="ghost" onClick={load}>
-          {t('audit.refresh')}
-        </Button>
+        <div className="page-header-actions">
+          <Button variant="ghost" onClick={load}>
+            <IconRefresh size={15} />
+            {t('audit.refresh')}
+          </Button>
+        </div>
       </div>
 
       {loadState === 'loading' && !hasData && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
+        <div className="flex-center" style={{ padding: 48 }}>
           <Spinner />
         </div>
       )}
 
       {loadState === 'error' && (
-        <div style={{ marginBottom: 12 }}>
+        <div style={{ marginBottom: 16 }}>
           <Callout type="error">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>{error}</span>
               <Button variant="ghost" onClick={load}>
+                <IconRefresh size={14} />
                 {t('vault.retry')}
               </Button>
             </div>
@@ -67,29 +70,50 @@ export const AuditLogPage: React.FC = () => {
       )}
 
       {hasData && (
-        <div className="card">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>{t('audit.table.when')}</th>
-                <th>{t('audit.table.action')}</th>
-                <th>{t('audit.table.entity')}</th>
-                <th>{t('audit.table.actor')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => (
-                <tr key={row.id}>
-                  <td>{new Date(row.timestamp).toLocaleString()}</td>
-                  <td>{row.action_type}</td>
-                  <td>
-                    {row.entity_type} / {row.entity_id}
-                  </td>
-                  <td>{row.actor}</td>
+        <div className="card card-flat">
+          <div className="table-wrapper">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>{t('audit.table.when')}</th>
+                  <th>{t('audit.table.action')}</th>
+                  <th>{t('audit.table.entity')}</th>
+                  <th>{t('audit.table.actor')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((row) => (
+                  <tr key={row.id}>
+                    <td style={{ color: 'var(--color-text-muted)', fontSize: 12.5 }}>
+                      {new Date(row.timestamp).toLocaleString()}
+                    </td>
+                    <td>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontWeight: 500,
+                      }}>
+                        <IconClipboard size={14} color="var(--color-text-light)" />
+                        {row.action_type}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--color-text-muted)' }}>
+                      <code style={{
+                        fontSize: 12,
+                        background: 'var(--color-bg-subtle)',
+                        padding: '2px 6px',
+                        borderRadius: 'var(--radius-sm)',
+                      }}>
+                        {row.entity_type}/{row.entity_id}
+                      </code>
+                    </td>
+                    <td style={{ fontWeight: 500 }}>{row.actor}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -102,4 +126,3 @@ export const AuditLogPage: React.FC = () => {
     </div>
   );
 };
-
