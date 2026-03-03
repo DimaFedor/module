@@ -27,6 +27,8 @@ var api = {
   evidenceUndoDelete: () => import_electron.ipcRenderer.invoke("evidence:undoDelete"),
   auditLogList: () => import_electron.ipcRenderer.invoke("audit:list"),
   exportCreate: (filters) => import_electron.ipcRenderer.invoke("export:create", filters),
+  evidenceExportCsv: (filters) => import_electron.ipcRenderer.invoke("evidence:exportCsv", filters),
+  dashboardStats: () => import_electron.ipcRenderer.invoke("dashboard:stats"),
   themeGetSystem: () => import_electron.ipcRenderer.invoke("theme:get-system")
 };
 import_electron.contextBridge.exposeInMainWorld("electronApi", api);

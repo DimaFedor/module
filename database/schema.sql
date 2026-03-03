@@ -32,3 +32,14 @@ CREATE TABLE IF NOT EXISTS audit_log (
   actor TEXT NOT NULL DEFAULT 'system',
   timestamp TEXT NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_evidence_version_group_id ON evidence(version_group_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_status ON evidence(status);
+CREATE INDEX IF NOT EXISTS idx_evidence_category ON evidence(category);
+CREATE INDEX IF NOT EXISTS idx_evidence_created_at ON evidence(created_at);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp_desc ON audit_log(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_action_type ON audit_log(action_type);
+
+CREATE INDEX IF NOT EXISTS idx_evidence_tags_evidence_id ON evidence_tags(evidence_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_tags_tag_id ON evidence_tags(tag_id);

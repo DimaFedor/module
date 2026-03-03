@@ -2,8 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { t } from '../i18n/t';
 import { Spinner } from '../components/ui/Spinner';
-import { listEvidence } from '../services/evidenceService';
-import { listAuditLog } from '../services/auditService';
+import { Callout } from '../components/ui/Callout';
 import {
   IconShield,
   IconFile,
@@ -12,45 +11,51 @@ import {
   IconClipboard,
   IconArchive,
   IconPlus,
-  IconAlertTriangle,
 } from '../components/icons/Icons';
-import type { EvidenceRow, AuditLogRow } from '../types/ipc';
+import type { DashboardStats } from '../types/ipc';
+import { getDashboardStats } from '../services/dashboardService';
+
+type LoadState = 'idle' | 'loading' | 'success' | 'error';
+
+function formatTimestamp(ts: string) {
+  return new Date(ts).toLocaleString('uk-UA');
+}
+
+function actionColor(action: string) {
+  if (action === 'CREATE') return 'badge-status-create';
+  if (action === 'UPDATE') return 'badge-status-update';
+  if (action === 'STATUS_CHANGE') return 'badge-status-status-change';
+  if (action === 'DELETE') return 'badge-status-delete';
+  if (action === 'EXPORT_PACKAGE') return 'badge-status-export';
+  return 'badge-status-default';
+}
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = React.useState(true);
-  const [stats, setStats] = React.useState({
-    total: 0,
-    drafts: 0,
-    submitted: 0,
-    approved: 0,
-  });
-  const [recentLogs, setRecentLogs] = React.useState<AuditLogRow[]>([]);
+  const [loadState, setLoadState] = React.useState<LoadState>('idle');
+  const [error, setError] = React.useState<string | null>(null);
+  const [stats, setStats] = React.useState<DashboardStats | null>(null);
 
-  React.useEffect(() => {
-    (async () => {
-      try {
-        const [evidenceRes, auditData] = await Promise.all([
-          listEvidence({ search: '', status: 'all', category: 'all', sortBy: 'created_at', sortDir: 'desc', page: 1, pageSize: 1000, includeHistory: false }),
-          listAuditLog(),
-        ]);
-        const items = evidenceRes.items;
-        setStats({
-          total: items.length,
-          drafts: items.filter((i) => i.status === 'draft').length,
-          submitted: items.filter((i) => i.status === 'submitted').length,
-          approved: items.filter((i) => i.status === 'approved').length,
-        });
-        setRecentLogs(auditData.slice(0, 5));
-      } catch {
-        // silently fail, dashboard is non-critical
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const load = React.useCallback(async () => {
+    setLoadState('loading');
+    setError(null);
+    try {
+      const res = await getDashboardStats();
+      setStats(res);
+      setLoadState('success');
+    } catch (e: any) {
+      setError(e?.message || 'Не вдалося завантажити дані панелі.');
+      setLoadState('error');
+    }
   }, []);
 
-  if (loading) {
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
+  const initialLoading = loadState === 'loading' && !stats;
+
+  if (initialLoading) {
     return (
       <div className="flex-center" style={{ padding: 60 }}>
         <Spinner />
@@ -67,6 +72,19 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
+      {loadState === 'error' && (
+        <div style={{ marginBottom: 16 }}>
+          <Callout type="error">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+              <span>{error}</span>
+              <button className="btn btn-ghost" onClick={load}>
+                Повторити
+              </button>
+            </div>
+          </Callout>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="stat-grid">
         <div className="stat-card">
@@ -74,9 +92,8 @@ export const DashboardPage: React.FC = () => {
             <IconShield size={22} />
           </div>
           <div className="stat-card-content">
-            <div className="stat-card-label">Всього доказів</div>
-            <div className="stat-card-value">{stats.total}</div>
-            <div className="stat-card-subtitle">у сховищі</div>
+            <div className="stat-card-label">{t('dashboard.total')}</div>
+            <div className="stat-card-value">{stats?.total ?? 0}</div>
           </div>
         </div>
 
@@ -85,9 +102,8 @@ export const DashboardPage: React.FC = () => {
             <IconFile size={22} />
           </div>
           <div className="stat-card-content">
-            <div className="stat-card-label">Чернетки</div>
-            <div className="stat-card-value">{stats.drafts}</div>
-            <div className="stat-card-subtitle">потребують уваги</div>
+            <div className="stat-card-label">{t('dashboard.draft')}</div>
+            <div className="stat-card-value">{stats?.byStatus['draft'] ?? 0}</div>
           </div>
         </div>
 
@@ -96,9 +112,8 @@ export const DashboardPage: React.FC = () => {
             <IconClock size={22} />
           </div>
           <div className="stat-card-content">
-            <div className="stat-card-label">Подані</div>
-            <div className="stat-card-value">{stats.submitted}</div>
-            <div className="stat-card-subtitle">на перевірці</div>
+            <div className="stat-card-label">{t('dashboard.submitted')}</div>
+            <div className="stat-card-value">{stats?.byStatus['submitted'] ?? 0}</div>
           </div>
         </div>
 
@@ -107,33 +122,34 @@ export const DashboardPage: React.FC = () => {
             <IconCheck size={22} />
           </div>
           <div className="stat-card-content">
-            <div className="stat-card-label">Погоджені</div>
-            <div className="stat-card-value">{stats.approved}</div>
-            <div className="stat-card-subtitle">готові до аудиту</div>
+            <div className="stat-card-label">{t('dashboard.approved')}</div>
+            <div className="stat-card-value">{stats?.byStatus['approved'] ?? 0}</div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="section-title" style={{ marginTop: 28 }}>Швидкі дії</div>
+      <div className="section-title" style={{ marginTop: 28 }}>
+        Швидкі дії
+      </div>
       <div className="quick-actions">
-        <Link to="/evidence/new" className="quick-action-card">
-          <div className="quick-action-icon">
-            <IconPlus size={20} />
-          </div>
-          <div className="quick-action-text">
-            <h3>{t('vault.newEvidence')}</h3>
-            <p>Створити новий запис у сховищі</p>
-          </div>
-        </Link>
-
         <Link to="/vault" className="quick-action-card">
           <div className="quick-action-icon">
             <IconShield size={20} />
           </div>
           <div className="quick-action-text">
-            <h3>{t('nav.vault')}</h3>
-            <p>Пошук та управління доказами</p>
+            <h3>{t('dashboard.goVault')}</h3>
+            <p>{t('nav.vault')}</p>
+          </div>
+        </Link>
+
+        <Link to="/evidence/new" className="quick-action-card">
+          <div className="quick-action-icon">
+            <IconPlus size={20} />
+          </div>
+          <div className="quick-action-text">
+            <h3>{t('nav.addEvidence')}</h3>
+            <p>{t('vault.newEvidence')}</p>
           </div>
         </Link>
 
@@ -142,48 +158,86 @@ export const DashboardPage: React.FC = () => {
             <IconArchive size={20} />
           </div>
           <div className="quick-action-text">
-            <h3>{t('nav.export')}</h3>
-            <p>Сформувати ZIP-пакет для аудиту</p>
+            <h3>{t('dashboard.goExport')}</h3>
+            <p>{t('export.title')}</p>
+          </div>
+        </Link>
+
+        <Link to="/audit-log" className="quick-action-card">
+          <div className="quick-action-icon">
+            <IconClipboard size={20} />
+          </div>
+          <div className="quick-action-text">
+            <h3>{t('dashboard.goAuditLog')}</h3>
+            <p>{t('audit.title')}</p>
           </div>
         </Link>
       </div>
 
-      {/* Recent Audit Log */}
-      {recentLogs.length > 0 && (
-        <div style={{ marginTop: 28 }}>
-          <div className="section-title">
-            <IconClipboard size={16} />
-            Останні події
+      {/* Last export */}
+      <div style={{ marginTop: 28 }}>
+        <div className="section-title">{t('dashboard.lastExport')}</div>
+        <div className="card card-flat">
+          <div style={{ fontSize: 14 }}>
+            {stats?.lastExport
+              ? formatTimestamp(stats.lastExport.timestamp)
+              : t('dashboard.lastExport.none')}
           </div>
-          <div className="card card-flat">
+        </div>
+      </div>
+
+      {/* Recent Audit Log */}
+      <div style={{ marginTop: 28 }}>
+        <div className="section-title">
+          <IconClipboard size={16} />
+          {t('dashboard.recentAudit')}
+        </div>
+        <div className="card card-flat">
+          {stats && stats.recentAudit.length > 0 ? (
             <table className="table">
               <thead>
                 <tr>
                   <th>{t('audit.table.when')}</th>
                   <th>{t('audit.table.action')}</th>
                   <th>{t('audit.table.entity')}</th>
-                  <th>{t('audit.table.actor')}</th>
                 </tr>
               </thead>
               <tbody>
-                {recentLogs.map((row) => (
+                {stats.recentAudit.map((row) => (
                   <tr key={row.id}>
-                    <td>{new Date(row.timestamp).toLocaleString()}</td>
-                    <td>{row.action_type}</td>
-                    <td>{row.entity_type} / {row.entity_id}</td>
-                    <td>{row.actor}</td>
+                    <td>{formatTimestamp(row.timestamp)}</td>
+                    <td>
+                      <span className={`badge ${actionColor(row.action_type)}`}>
+                        {row.action_type}
+                      </span>
+                    </td>
+                    <td>
+                      {row.entity_type} / {row.entity_id}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div style={{ textAlign: 'right', marginTop: 12 }}>
-              <Link to="/audit-log" style={{ fontSize: 13, color: 'var(--color-accent)', textDecoration: 'none', fontWeight: 500 }}>
-                Переглянути всі події →
-              </Link>
+          ) : (
+            <div style={{ padding: 16, fontSize: 14, color: 'var(--color-text-muted)' }}>
+              {t('dashboard.recentAudit.empty')}
             </div>
+          )}
+          <div style={{ textAlign: 'right', marginTop: 12 }}>
+            <Link
+              to="/audit-log"
+              style={{
+                fontSize: 13,
+                color: 'var(--color-accent)',
+                textDecoration: 'none',
+                fontWeight: 500,
+              }}
+            >
+              Переглянути всі події →
+            </Link>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

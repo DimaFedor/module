@@ -221,6 +221,14 @@ function registerIpcHandlers() {
     upsertTagsForEvidence(newId, payload.tags);
     if (existing.status !== payload.status) {
       logAudit("STATUS_CHANGE", newId, "evidence");
+      if (import_electron2.Notification.isSupported()) {
+        new import_electron2.Notification({
+          title: "\u0417\u043C\u0456\u043D\u0430 \u0441\u0442\u0430\u0442\u0443\u0441\u0443",
+          body: `"${payload.title}": ${existing.status} \u2192 ${payload.status}`
+        }).show();
+      }
+    } else {
+      logAudit("UPDATE", newId, "evidence");
     }
     return evidence;
   });
@@ -269,6 +277,37 @@ function registerIpcHandlers() {
     const rows = stmt.all();
     return rows;
   });
+  import_electron2.ipcMain.handle("dashboard:stats", () => {
+    const latestTable = "evidence e JOIN (SELECT version_group_id, MAX(version_number) AS max_version FROM evidence GROUP BY version_group_id) latest ON e.version_group_id = latest.version_group_id AND e.version_number = latest.max_version";
+    const totalStmt = db.prepare(`SELECT COUNT(*) as count FROM ${latestTable}`);
+    const totalRow = totalStmt.get();
+    const byStatusStmt = db.prepare(
+      `SELECT status, COUNT(*) as count FROM ${latestTable} GROUP BY status`
+    );
+    const byStatusRows = byStatusStmt.all();
+    const byStatus = {
+      draft: 0,
+      submitted: 0,
+      approved: 0
+    };
+    for (const row of byStatusRows) {
+      byStatus[row.status] = row.count;
+    }
+    const recentAuditStmt = db.prepare(
+      "SELECT * FROM audit_log ORDER BY timestamp DESC LIMIT 5"
+    );
+    const recentAudit = recentAuditStmt.all();
+    const lastExportStmt = db.prepare(
+      "SELECT * FROM audit_log WHERE action_type = 'EXPORT_PACKAGE' ORDER BY timestamp DESC LIMIT 1"
+    );
+    const lastExport = lastExportStmt.get();
+    return {
+      total: totalRow.count,
+      byStatus,
+      recentAudit,
+      lastExport: lastExport ?? null
+    };
+  });
   import_electron2.ipcMain.handle("export:create", async (_event, filters) => {
     if (!mainWindow) return null;
     const result = await import_electron2.dialog.showSaveDialog(mainWindow, {
@@ -301,6 +340,65 @@ function registerIpcHandlers() {
     } else {
       logAudit("EXPORT_PACKAGE", "none", "evidence");
     }
+    if (import_electron2.Notification.isSupported()) {
+      new import_electron2.Notification({
+        title: "\u0415\u043A\u0441\u043F\u043E\u0440\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u043E",
+        body: `ZIP-\u043F\u0430\u043A\u0435\u0442 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043D\u043E (${items.length} \u0434\u043E\u043A\u0430\u0437\u0456\u0432).`
+      }).show();
+    }
+    return result.filePath;
+  });
+  import_electron2.ipcMain.handle("evidence:exportCsv", async (_event, filters) => {
+    if (!mainWindow) return null;
+    const result = await import_electron2.dialog.showSaveDialog(mainWindow, {
+      title: "Save CSV export",
+      filters: [{ name: "CSV", extensions: ["csv"] }],
+      defaultPath: "evidence-export.csv"
+    });
+    if (result.canceled || !result.filePath) {
+      return null;
+    }
+    const where = [];
+    const params = [];
+    if (filters.status && filters.status !== "all") {
+      where.push("status = ?");
+      params.push(filters.status);
+    }
+    if (filters.category && filters.category !== "all") {
+      where.push("category = ?");
+      params.push(filters.category);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const latestTable = "evidence e JOIN (SELECT version_group_id, MAX(version_number) AS max_version FROM evidence GROUP BY version_group_id) latest ON e.version_group_id = latest.version_group_id AND e.version_number = latest.max_version";
+    const evidenceStmt = db.prepare(
+      `SELECT e.* FROM ${latestTable} ${whereSql}`
+    );
+    const items = evidenceStmt.all(...params);
+    const tagsStmt = db.prepare(
+      "SELECT t.name FROM tags t JOIN evidence_tags et ON et.tag_id = t.id WHERE et.evidence_id = ?"
+    );
+    function escapeCsv(value) {
+      const escaped = value.replace(/"/g, '""');
+      return `"${escaped}"`;
+    }
+    const header = "\u041D\u0430\u0437\u0432\u0430;\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0456\u044F;\u0421\u0442\u0430\u0442\u0443\u0441;\u0412\u0435\u0440\u0441\u0456\u044F;\u0424\u0430\u0439\u043B;\u0421\u0442\u0432\u043E\u0440\u0435\u043D\u043E;\u041E\u043D\u043E\u0432\u043B\u0435\u043D\u043E;\u0422\u0435\u0433\u0438";
+    const lines = [header];
+    for (const item of items) {
+      const tags = tagsStmt.all(item.id).map((t) => String(t.name));
+      const row = [
+        escapeCsv(item.title),
+        escapeCsv(item.category),
+        escapeCsv(item.status),
+        escapeCsv(String(item.version_number)),
+        escapeCsv(item.file_path),
+        escapeCsv(item.created_at),
+        escapeCsv(item.updated_at),
+        escapeCsv(tags.join(", "))
+      ].join(";");
+      lines.push(row);
+    }
+    const content = "\uFEFF" + lines.join("\n");
+    import_fs2.default.writeFileSync(result.filePath, content, "utf-8");
     return result.filePath;
   });
 }

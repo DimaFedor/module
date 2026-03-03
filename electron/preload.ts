@@ -63,6 +63,13 @@ interface AuditLogRow {
   timestamp: string;
 }
 
+interface DashboardStats {
+  total: number;
+  byStatus: Record<string, number>;
+  recentAudit: AuditLogRow[];
+  lastExport: AuditLogRow | null;
+}
+
 export interface ElectronApi {
   openEvidenceFile(): Promise<string | null>;
   evidenceList(req: EvidenceListRequest): Promise<EvidenceListResponse>;
@@ -73,6 +80,8 @@ export interface ElectronApi {
   evidenceUndoDelete(): Promise<EvidenceRow | null>;
   auditLogList(): Promise<AuditLogRow[]>;
   exportCreate(filters: ExportFilters): Promise<string | null>;
+   evidenceExportCsv(filters: ExportFilters): Promise<string | null>;
+   dashboardStats(): Promise<DashboardStats>;
   themeGetSystem(): Promise<'light' | 'dark'>;
 }
 
@@ -86,6 +95,8 @@ const api: ElectronApi = {
   evidenceUndoDelete: () => ipcRenderer.invoke('evidence:undoDelete'),
   auditLogList: () => ipcRenderer.invoke('audit:list'),
   exportCreate: (filters) => ipcRenderer.invoke('export:create', filters),
+  evidenceExportCsv: (filters) => ipcRenderer.invoke('evidence:exportCsv', filters),
+  dashboardStats: () => ipcRenderer.invoke('dashboard:stats'),
   themeGetSystem: () => ipcRenderer.invoke('theme:get-system'),
 };
 

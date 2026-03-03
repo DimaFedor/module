@@ -61,6 +61,13 @@ export interface AuditLogRow {
   timestamp: string;
 }
 
+export interface DashboardStats {
+  total: number;
+  byStatus: Record<string, number>;
+  recentAudit: AuditLogRow[];
+  lastExport: AuditLogRow | null;
+}
+
 export interface ElectronApi {
   openEvidenceFile(): Promise<string | null>;
   evidenceList(req: EvidenceListRequest): Promise<EvidenceListResponse>;
@@ -71,6 +78,8 @@ export interface ElectronApi {
   evidenceUndoDelete(): Promise<EvidenceRow | null>;
   auditLogList(): Promise<AuditLogRow[]>;
   exportCreate(filters: ExportFilters): Promise<string | null>;
+  evidenceExportCsv(filters: ExportFilters): Promise<string | null>;
+  dashboardStats(): Promise<DashboardStats>;
   themeGetSystem(): Promise<'light' | 'dark'>;
 }
 

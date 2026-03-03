@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, nativeTheme } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme, Notification } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
@@ -271,6 +271,14 @@ function registerIpcHandlers() {
 
     if (existing.status !== payload.status) {
       logAudit('STATUS_CHANGE', newId, 'evidence');
+      if (Notification.isSupported()) {
+        new Notification({
+          title: 'Зміна статусу',
+          body: `"${payload.title}": ${existing.status} → ${payload.status}`,
+        }).show();
+      }
+    } else {
+      logAudit('UPDATE', newId, 'evidence');
     }
 
     return evidence;
@@ -331,6 +339,44 @@ function registerIpcHandlers() {
     return rows;
   });
 
+  ipcMain.handle('dashboard:stats', () => {
+    const latestTable =
+      'evidence e JOIN (SELECT version_group_id, MAX(version_number) AS max_version FROM evidence GROUP BY version_group_id) latest ON e.version_group_id = latest.version_group_id AND e.version_number = latest.max_version';
+
+    const totalStmt = db.prepare(`SELECT COUNT(*) as count FROM ${latestTable}`);
+    const totalRow = totalStmt.get() as { count: number };
+
+    const byStatusStmt = db.prepare(
+      `SELECT status, COUNT(*) as count FROM ${latestTable} GROUP BY status`
+    );
+    const byStatusRows = byStatusStmt.all() as { status: EvidenceStatus; count: number }[];
+    const byStatus: Record<string, number> = {
+      draft: 0,
+      submitted: 0,
+      approved: 0,
+    };
+    for (const row of byStatusRows) {
+      byStatus[row.status] = row.count;
+    }
+
+    const recentAuditStmt = db.prepare(
+      'SELECT * FROM audit_log ORDER BY timestamp DESC LIMIT 5'
+    );
+    const recentAudit = recentAuditStmt.all() as AuditLogRow[];
+
+    const lastExportStmt = db.prepare(
+      "SELECT * FROM audit_log WHERE action_type = 'EXPORT_PACKAGE' ORDER BY timestamp DESC LIMIT 1"
+    );
+    const lastExport = lastExportStmt.get() as AuditLogRow | undefined;
+
+    return {
+      total: totalRow.count,
+      byStatus,
+      recentAudit,
+      lastExport: lastExport ?? null,
+    };
+  });
+
   ipcMain.handle('export:create', async (_event, filters: ExportFilters) => {
     if (!mainWindow) return null;
 
@@ -369,6 +415,84 @@ function registerIpcHandlers() {
     } else {
       logAudit('EXPORT_PACKAGE', 'none', 'evidence');
     }
+
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'Експорт завершено',
+        body: `ZIP-пакет збережено (${items.length} доказів).`,
+      }).show();
+    }
+
+    return result.filePath;
+  });
+
+  ipcMain.handle('evidence:exportCsv', async (_event, filters: ExportFilters) => {
+    if (!mainWindow) return null;
+
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Save CSV export',
+      filters: [{ name: 'CSV', extensions: ['csv'] }],
+      defaultPath: 'evidence-export.csv',
+    });
+
+    if (result.canceled || !result.filePath) {
+      return null;
+    }
+
+    const where: string[] = [];
+    const params: any[] = [];
+    if (filters.status && filters.status !== 'all') {
+      where.push('status = ?');
+      params.push(filters.status);
+    }
+    if (filters.category && filters.category !== 'all') {
+      where.push('category = ?');
+      params.push(filters.category);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    const latestTable =
+      'evidence e JOIN (SELECT version_group_id, MAX(version_number) AS max_version FROM evidence GROUP BY version_group_id) latest ON e.version_group_id = latest.version_group_id AND e.version_number = latest.max_version';
+
+    const evidenceStmt = db.prepare(
+      `SELECT e.* FROM ${latestTable} ${whereSql}`
+    );
+    const items = evidenceStmt.all(...params) as EvidenceRow[];
+
+    const tagsStmt = db.prepare(
+      'SELECT t.name FROM tags t JOIN evidence_tags et ON et.tag_id = t.id WHERE et.evidence_id = ?'
+    );
+
+    function escapeCsv(value: string): string {
+      const escaped = value.replace(/"/g, '""');
+      return `"${escaped}"`;
+    }
+
+    const header =
+      'Назва;Категорія;Статус;Версія;Файл;Створено;Оновлено;Теги';
+
+    const lines = [header];
+    for (const item of items) {
+      const tags = tagsStmt
+        .all(item.id)
+        .map((t: any) => String(t.name)) as string[];
+
+      const row = [
+        escapeCsv(item.title),
+        escapeCsv(item.category),
+        escapeCsv(item.status),
+        escapeCsv(String(item.version_number)),
+        escapeCsv(item.file_path),
+        escapeCsv(item.created_at),
+        escapeCsv(item.updated_at),
+        escapeCsv(tags.join(', ')),
+      ].join(';');
+
+      lines.push(row);
+    }
+
+    const content = '\uFEFF' + lines.join('\n');
+    fs.writeFileSync(result.filePath, content, 'utf-8');
 
     return result.filePath;
   });

@@ -11,16 +11,25 @@ export const ukDictionary = {
 
   'dashboard.title': 'Панель керування',
   'dashboard.subtitle':
-    'Огляд стану сховища доказів та останніх аудиторських подій.',
+    'Огляд стану сховища доказів, оновлень версій та останніх аудиторських подій.',
   'dashboard.goVault': 'Перейти до сховища доказів',
   'dashboard.goAuditLog': 'Відкрити журнал аудиту',
   'dashboard.goExport': 'Створити експортний пакет',
+  'dashboard.total': 'Всього доказів',
+  'dashboard.draft': 'Чернетки',
+  'dashboard.submitted': 'Подані',
+  'dashboard.approved': 'Погоджені',
+  'dashboard.recentAudit': 'Останні події аудиту',
+  'dashboard.recentAudit.empty': 'Ще немає зафіксованих аудиторських подій.',
+  'dashboard.lastExport': 'Останній експорт пакету',
+  'dashboard.lastExport.none': 'Експорт ZIP-пакету ще не виконувався.',
 
   'vault.title': 'Сховище доказів',
   'vault.subtitle':
     'Пошук та фільтрація доказів; за замовчуванням показуються останні версії для прозорості.',
   'vault.autoRefresh': 'Автооновлення',
   'vault.newEvidence': 'Новий доказ',
+  'vault.exportCsv': 'Експорт CSV',
   'vault.searchPlaceholder': 'Пошук за назвою, описом або тегами',
   'vault.filter.status.all': 'Усі статуси',
   'vault.filter.status.draft': 'Чернетки',
@@ -81,7 +90,7 @@ export const ukDictionary = {
 
   'audit.title': 'Журнал аудиту',
   'audit.subtitle':
-    'Критичні дії — видалення, зміни статусу та експорт пакету — фіксуються для прозорості.',
+    'Критичні дії — створення, оновлення, видалення, зміни статусу та експорт пакету — фіксуються для прозорості.',
   'audit.refresh': 'Оновити',
   'audit.error.load': 'Не вдалося завантажити журнал аудиту.',
   'audit.empty.title': 'Журнал аудиту порожній',

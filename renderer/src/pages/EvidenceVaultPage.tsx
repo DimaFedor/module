@@ -11,7 +11,7 @@ import { Modal } from '../components/ui/Modal';
 import { Snackbar } from '../components/ui/Snackbar';
 import { Badge } from '../components/ui/Badge';
 import { CheckboxRow } from '../components/ui/CheckboxRow';
-import { listEvidence, deleteEvidence, undoDeleteEvidence } from '../services/evidenceService';
+import { listEvidence, deleteEvidence, undoDeleteEvidence, exportEvidenceCsv } from '../services/evidenceService';
 import { IconPlus, IconSearch, IconEdit, IconTrash, IconRefresh } from '../components/icons/Icons';
 import type { EvidenceRow, EvidenceStatus } from '../types/ipc';
 import { t } from '../i18n/t';
@@ -95,6 +95,14 @@ export const EvidenceVaultPage: React.FC = () => {
     load();
   };
 
+  const handleCsvExport = async () => {
+    try {
+      await exportEvidenceCsv({ status, category });
+    } catch {
+      // ignore (e.g. user cancelled dialog)
+    }
+  };
+
   const hasData = items.length > 0;
 
   return (
@@ -120,6 +128,9 @@ export const EvidenceVaultPage: React.FC = () => {
               <option value="60">60s</option>
             </Select>
           )}
+          <Button variant="ghost" onClick={handleCsvExport}>
+            {t('vault.exportCsv')}
+          </Button>
           <Button onClick={() => navigate('/evidence/new')}>
             <IconPlus size={16} />
             {t('vault.newEvidence')}

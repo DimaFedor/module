@@ -4,6 +4,7 @@ import type {
   EvidenceCreatePayload,
   EvidenceUpdatePayload,
   EvidenceRow,
+  ExportFilters,
 } from '../types/ipc';
 
 export function listEvidence(req: EvidenceListRequest): Promise<EvidenceListResponse> {
@@ -32,5 +33,9 @@ export function undoDeleteEvidence() {
 
 export function openEvidenceFileDialog() {
   return window.electronApi.openEvidenceFile();
+}
+
+export function exportEvidenceCsv(filters: { status?: string; category?: string }) {
+  return window.electronApi.evidenceExportCsv(filters as ExportFilters);
 }
 
