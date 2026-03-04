@@ -249,7 +249,6 @@ export const EvidenceFormPage: React.FC = () => {
                 </span>
               )}
               <span style={{ fontSize: 11, color: 'var(--color-text-light)' }}>
-                {t('form.field.file.none')}
               </span>
             </div>
             {errors.filePath && <div className="form-error">{errors.filePath}</div>}
