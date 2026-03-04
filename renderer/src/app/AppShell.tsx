@@ -81,16 +81,6 @@ export const AppShell: React.FC = () => {
             );
           })}
         </nav>
-        <div className="sidebar-footer">
-          <button
-            type="button"
-            className="theme-toggle"
-            onClick={toggleTheme}
-            title={theme === 'dark' ? t('theme.light') : t('theme.dark')}
-          >
-            {theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
-          </button>
-        </div>
       </aside>
       <div className="main-area">
         <header className="app-header">
